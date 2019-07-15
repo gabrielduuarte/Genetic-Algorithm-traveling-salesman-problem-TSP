@@ -13,12 +13,13 @@
 
 void cities_distances(int dist[CITIES][CITIES]);
 void init_pop(int pop[POP][GENES]);
+void fitness(float fit[POP], int pop[POP][GENES], int distances[CITIES][CITIES]);
 
 int main(void)
 {
     int distances[CITIES][CITIES]={};
     int pop[POP][GENES]={};
-    int fit[POP] = {};
+    float fit[POP] = {};
     int i, j;
 
     srand(time(NULL));
@@ -31,9 +32,24 @@ int main(void)
     
     init_pop(pop);
 
-    fit = fitness(pop);
+    fitness(fit, pop, distances);
 
     return 0;
+}
+
+void fitness(float fit[POP], int pop[POP][GENES], int distances[CITIES][CITIES])
+{
+    int i ,j, sum;
+
+    for(i=0; i<POP; i++)
+    {
+        sum = 0;
+        for(j=0; j<GENES-1; j++)
+            sum += distances[pop[i][j]][pop[i][j+1]];
+        printf("sum[%d]: %d\n", i, sum);
+        fit[i] = 1 / (float) sum;
+        printf("fit: %f\n", fit[i]);
+    }
 }
 
 void init_pop(int pop[POP][GENES])
