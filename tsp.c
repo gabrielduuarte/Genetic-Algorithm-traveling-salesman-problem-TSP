@@ -15,6 +15,7 @@
 void cities_distances(int dist[CITIES][CITIES]);
 void init_pop(int pop[POP][GENES]);
 void fitness(float fit[POP], int pop[POP][GENES], int distances[CITIES][CITIES]);
+void sort_pop(int pop[POP][GENES], float fit[POP]);
 
 int main(void)
 {
@@ -35,8 +36,40 @@ int main(void)
 
     fitness(fit, pop, distances);
 
+    sort_pop(pop, fit);
+    
+    for(i=0; i<POP; i++)
+    {
+        printf("pop[%d]: ", i);
+        for(j=0; j<GENES; j++)
+            printf("%d, ", pop[i][j]);
+        printf("\n");
+    }
+
     return 0;
 }
+
+void sort_pop(int pop[POP][GENES], float fit[POP])
+{
+    int i, j, a, aup[GENES];
+    float aux;
+
+    for(i=0; i<POP-1; i++)
+        for(j=i+1; j<POP; j++)
+            if(fit[j] > fit[i])
+            {
+                aux = fit[i];
+                fit[i] = fit[j];
+                fit[j] = aux;
+                for(a=0; a<GENES; a++)
+                {
+                    aup[a] = pop[i][a];
+                    pop[i][a] = pop[j][a];
+                    pop[j][a] = aup[a];
+                }
+            }
+}
+
 
 void fitness(float fit[POP], int pop[POP][GENES], int distances[CITIES][CITIES])
 {
