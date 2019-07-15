@@ -16,13 +16,14 @@ void cities_distances(int dist[CITIES][CITIES]);
 void init_pop(int pop[POP][GENES]);
 void fitness(float fit[POP], int pop[POP][GENES], int distances[CITIES][CITIES]);
 void sort_pop(int pop[POP][GENES], float fit[POP]);
+int pool(void);
 
 int main(void)
 {
     int distances[CITIES][CITIES]={};
     int pop[POP][GENES]={};
     float fit[POP] = {};
-    int i, j;
+    int i, j, f, c1;
 
     srand(time(NULL));
 
@@ -46,7 +47,40 @@ int main(void)
         printf("\n");
     }
 
+    c1 = pool();
+
+    /* for(g=1; g<GENERATIONS; g++) */
+    /* { */
+    /*     f=0; */
+    /*     while(f < POP) */
+    /*     { */
+    /*         c1 = pool(fit); */
+            /* c2 = pool(fit); */
+        /* } */
+    /* } */
+
     return 0;
+}
+
+int pool(void)
+{
+    float r = 0.6;
+    float rol[POP];
+    int s, i;
+
+    for(i=0; i<POP; i++)
+    {
+        rol[i] = r;
+        printf("rol[%d]:%f\n", i, rol[i]);
+        r -= r*0.6;
+    }
+    
+    s = rand()%100+1;
+    for(i=0; i<POP; i++)
+        if(s >= rol[i])
+            return i;
+
+    return -1;
 }
 
 void sort_pop(int pop[POP][GENES], float fit[POP])
