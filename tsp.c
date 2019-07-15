@@ -10,6 +10,7 @@
 #define CITIES 8
 #define GENES CITIES+1
 #define POP 10
+#define GENERATIONS 200
 
 void cities_distances(int dist[CITIES][CITIES]);
 void init_pop(int pop[POP][GENES]);
