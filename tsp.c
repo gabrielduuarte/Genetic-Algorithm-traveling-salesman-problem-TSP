@@ -7,31 +7,33 @@
 #include<stdlib.h>
 #include<time.h>
 
-#define CITIES 8
+#define CITIES 30
 #define GENES CITIES+1
 #define POP 10
-#define GENERATIONS 200
+#define GENERATIONS 300
 
 void cities_distances(int dist[CITIES][CITIES]);
 void init_pop(int pop[POP][GENES]);
 void fitness(float fit[POP], int pop[POP][GENES], int distances[CITIES][CITIES]);
 void sort_pop(int pop[POP][GENES], float fit[POP]);
 int pool(void);
+void crossover(int p1[], int p2[], int filho[]);
+void mutacao(int filhos[POP][GENES]);
+int contem(int v[GENES], int ng);
+int sameIndex(int v[GENES], int ng);
 
 int main(void)
 {
     int distances[CITIES][CITIES]={};
     int pop[POP][GENES]={};
+    int filhos[POP][GENES]={};
     float fit[POP] = {};
-    int i, j, f, c1;
+    float best[GENERATIONS] = {};
+    int i, j, f, c1, c2, g;
 
     srand(time(NULL));
 
     cities_distances(distances);
-
-    for(i=0; i<CITIES; i++)
-        for(j=0; j<CITIES; j++)
-            printf("dist[%d][%d]: %d\n", i, j, distances[i][j]);
     
     init_pop(pop);
 
@@ -46,20 +48,129 @@ int main(void)
             printf("%d, ", pop[i][j]);
         printf("\n");
     }
+    best[0] = fit[0];
 
-    c1 = pool();
 
-    /* for(g=1; g<GENERATIONS; g++) */
-    /* { */
-    /*     f=0; */
-    /*     while(f < POP) */
-    /*     { */
-    /*         c1 = pool(fit); */
-            /* c2 = pool(fit); */
-        /* } */
-    /* } */
+    for(g=1; g<GENERATIONS; g++)
+    {
+        f=0;
+        while(f < POP)
+        {
+            c1 = pool();
+            while((c2 = pool()) == c1);
+            crossover(pop[c1], pop[c2], filhos[f]);
+            f++;
+            crossover(pop[c2], pop[c1], filhos[f]);
+            f++;
+        }
+
+        mutacao(filhos);
+        fitness(fit, filhos, distances);
+        sort_pop(filhos, fit);
+
+        for(i=0; i<POP; i++)
+            for(j=0; j<GENES; j++)
+            {
+                pop[i][j] = filhos[i][j];
+                filhos[i][j] = 0;
+            }
+
+        
+        printf("Geracao: %d---------\n", g);
+        for(i=0; i<POP; i++)
+        {
+            printf("pop[%d]: ", i);
+            for(j=0; j<GENES; j++)
+                printf("%d, ", pop[i][j]);
+            printf("\n");
+        }
+        best[g] = fit[0];
+    }
+
+    for(g=0; g<GENERATIONS; g++)
+        printf("best[%d]: %f\n", g, best[g]);
+    
+    /* for(i=0; i<CITIES; i++) */
+    /*     for(j=0; j<CITIES; j++) */
+    /*         printf("dist[%d][%d]: %d\n", i, j, distances[i][j]); */
+
+    printf("Best Route: ");
+    for(i=0; i<GENES; i++)
+        printf("%d, ", pop[0][i]);
+    printf("\n");
+    
+    return 0;
+}
+
+int sameIndex(int v[GENES], int ng)
+{
+    int i;
+    
+    for(i=0; i<GENES; i++)
+        if(v[i] == ng)
+            return i;
 
     return 0;
+}
+
+void mutacao(int filhos[POP][GENES])
+{
+    int f, sorteio, go, ng, co, swp;
+
+    for(f=0; f<POP; f++)
+    {
+        sorteio = rand()%100+1;
+        if(sorteio >= 1 && sorteio <=3)
+        {
+            go = rand()%CITIES;
+            ng = rand()%CITIES;
+            /* swp = sameIndex(filhos[f], ng); */
+            swp = sameIndex(filhos[f], ng);
+            /* while(contem(filhos[f], ng)) */
+            /*     ng = rand()%CITIES; */
+            /* while((ng=rand()%GENES) == filhos[f][go]); */
+            co = filhos[f][go];
+            filhos[f][go] = ng;
+            filhos[f][swp] = co;
+        }
+    }
+
+}
+
+int contem(int v[GENES], int ng)
+{
+    int i;
+
+    for(i=0; i<GENES; i++)
+    {
+        if(v[i] == ng)
+            return 1;
+    }
+
+    return 0;
+}
+
+void crossover(int p1[], int p2[], int filho[])
+{
+    int i, n, f=CITIES/2;
+
+    for(i=0; i<GENES; i++)
+        filho[i] = -1;
+
+    for(i=0; i<CITIES/2; i++)
+        filho[i] = p1[i];
+
+    for(i=0; i<CITIES; i++)
+    {
+        n = p2[i];
+        if(contem(filho, n))
+            continue;
+        filho[f] = n;
+        f++;
+    }
+
+    filho[i] = filho[0];
+
 }
 
 int pool(void)
@@ -70,8 +181,7 @@ int pool(void)
 
     for(i=0; i<POP; i++)
     {
-        rol[i] = r;
-        printf("rol[%d]:%f\n", i, rol[i]);
+        rol[i] = r * 100;
         r -= r*0.6;
     }
     
@@ -114,9 +224,7 @@ void fitness(float fit[POP], int pop[POP][GENES], int distances[CITIES][CITIES])
         sum = 0;
         for(j=0; j<GENES-1; j++)
             sum += distances[pop[i][j]][pop[i][j+1]];
-        printf("sum[%d]: %d\n", i, sum);
         fit[i] = 1 / (float) sum;
-        printf("fit: %f\n", fit[i]);
     }
 }
 
@@ -129,8 +237,8 @@ void init_pop(int pop[POP][GENES])
         for(j=0; j<GENES-1; j++)
         {
             flag=0;
-            pop[i][j] = rand()%8;
-            while(flag < 8)
+            pop[i][j] = rand()%CITIES;
+            while(flag < CITIES)
             {
                 if(flag == j)
                     break;
@@ -140,7 +248,7 @@ void init_pop(int pop[POP][GENES])
                     flag++;
                     continue;
                 }
-                pop[i][j] = rand()%8;
+                pop[i][j] = rand()%CITIES;
                 flag = 0;
             }
         }
@@ -174,4 +282,5 @@ void cities_distances(int dist[CITIES][CITIES])
             if(i==j)
                 dist[i][j] = 0;
         }
+
 }
